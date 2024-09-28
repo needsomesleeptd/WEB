@@ -47,3 +47,9 @@ VALUES (0,'Ошибок нет, все хорошо))',1,'no_errors');
 --admin
 INSERT INTO users (id, login, password, name, surname, role, group)
 VALUES (9, 'admin', '$2a$10$nV.DqaVAtAr9EhCRqseU6OikgPC1GCIYsmb3Enh5pGwTwa/VntK8K', '<string>', '<string>', 2, '<string>');
+
+--autoinc MarkupTypes
+
+SELECT pg_get_serial_sequence('markup_types', 'id'); -- Get the sequence 
+
+ALTER SEQUENCE markup_types_id_seq RESTART WITH 200; -- Set starting value to 1000

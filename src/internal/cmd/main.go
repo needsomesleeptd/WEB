@@ -124,7 +124,8 @@ func main() {
 	annotHandlerV1 := annot_handler.NewAnnotHandlerV1(log, annotService)
 	annotHandlerV2 := annot_handler.NewAnnotHandlerV2(log, annotService)
 
-	annotTypeHandler := annot_type_handler.NewAnnotTypehandler(log, annotTypeService)
+	annotTypeHandlerV1 := annot_type_handler.NewAnnotTypehandlerV1(log, annotTypeService)
+	annotTypeHandlerV2 := annot_type_handler.NewAnnotTypehandlerV2(log, annotTypeService)
 
 	authHandlerV1 := auth_handler.NewAuthHandlerV1(log, authService)
 	authHandlerV2 := auth_handler.NewAuthHandlerV2(log, authService)
@@ -158,15 +159,15 @@ func main() {
 					adminOnlyAnnotTypes := r.Group(nil)
 					adminOnlyAnnotTypes.Use(accesMiddleware.AdminOnlyMiddleware)
 
-					r.Post("/add", annotTypeHandler.AddAnnotType())
-					r.Get("/get", annotTypeHandler.GetAnnotType())
+					r.Post("/add", annotTypeHandlerV1.AddAnnotType())
+					r.Get("/get", annotTypeHandlerV1.GetAnnotType())
 
-					r.Get("/creatorID", annotTypeHandler.GetAnnotTypesByCreatorID())
+					r.Get("/creatorID", annotTypeHandlerV1.GetAnnotTypesByCreatorID())
 
-					r.Get("/gets", annotTypeHandler.GetAnnotTypesByIDs())
+					r.Get("/gets", annotTypeHandlerV1.GetAnnotTypesByIDs())
 
-					adminOnlyAnnotTypes.Delete("/delete", annotTypeHandler.DeleteAnnotType())
-					r.Get("/getsAll", annotTypeHandler.GetAllAnnotTypes())
+					adminOnlyAnnotTypes.Delete("/delete", annotTypeHandlerV1.DeleteAnnotType())
+					r.Get("/getsAll", annotTypeHandlerV1.GetAllAnnotTypes())
 
 				})
 				//Annot
@@ -209,9 +210,10 @@ func main() {
 				r.Get("/documents/{id}/reports", documentHandlerV2.GetReportByID())
 
 				// AnnotTypes
-				r.With(accesMiddleware.ControllersAndHigherMiddleware).Post("/anottationTypes", nil) //smth
-				r.With(accesMiddleware.ControllersAndHigherMiddleware).Get("/anottationTypes", nil)
-				r.With(accesMiddleware.ControllersAndHigherMiddleware).Get("/anottationTypes/{id}", nil)
+				r.With(accesMiddleware.ControllersAndHigherMiddleware).Post("/anottationTypes", annotTypeHandlerV2.AddAnnotType())
+				r.With(accesMiddleware.ControllersAndHigherMiddleware).Get("/anotattionTypes", annotTypeHandlerV2.GetAllAnnotTypes())
+				r.With(accesMiddleware.AdminOnlyMiddleware).Delete("/anotattionTypes/{id}", annotTypeHandlerV2.DeleteAnnotType())
+				//in prev row doesn't throw not found error on deleting nothing
 
 				// Annots
 				r.With(accesMiddleware.ControllersAndHigherMiddleware).Post("/anottations", annotHandlerV2.AddAnnot()) //smth

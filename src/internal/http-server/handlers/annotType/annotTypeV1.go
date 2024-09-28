@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	ErrBrokenRequest    = errors.New("broken request")
+	ErrBrokenRequest    = errors.New("invalid request format")
 	ErrAddingAnnoType   = errors.New("error adding annotattion type")
 	ErrGettingAnnoType  = errors.New("error getting annotattion type")
 	ErrDeletingAnnoType = errors.New("error deleting annotattion type")
@@ -46,19 +46,19 @@ type ResponseGetTypes struct {
 	MarkupTypes []models_dto.MarkupType `json:"markupTypes"`
 }
 
-func NewAnnotTypehandler(logSrc *logrus.Logger, servSrc service.IAnotattionTypeService) AnnotTypeHandler {
-	return AnnotTypeHandler{
+func NewAnnotTypehandlerV1(logSrc *logrus.Logger, servSrc service.IAnotattionTypeService) AnnotTypeHandlerV1 {
+	return AnnotTypeHandlerV1{
 		log:           logSrc,
 		annotTypeServ: servSrc,
 	}
 }
 
-type AnnotTypeHandler struct {
+type AnnotTypeHandlerV1 struct {
 	annotTypeServ service.IAnotattionTypeService
 	log           *logrus.Logger
 }
 
-func (h *AnnotTypeHandler) AddAnnotType() http.HandlerFunc {
+func (h *AnnotTypeHandlerV1) AddAnnotType() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req RequestAnnotType
 		userID, ok := r.Context().Value(auth_middleware.UserIDContextKey).(uint64)
@@ -90,7 +90,7 @@ func (h *AnnotTypeHandler) AddAnnotType() http.HandlerFunc {
 	}
 }
 
-func (h *AnnotTypeHandler) GetAnnotType() http.HandlerFunc {
+func (h *AnnotTypeHandlerV1) GetAnnotType() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req RequestID
 		err := render.DecodeJSON(r.Body, &req)
@@ -112,7 +112,7 @@ func (h *AnnotTypeHandler) GetAnnotType() http.HandlerFunc {
 	}
 }
 
-func (h *AnnotTypeHandler) GetAnnotTypesByIDs() http.HandlerFunc {
+func (h *AnnotTypeHandlerV1) GetAnnotTypesByIDs() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req RequestIDs
 		err := render.DecodeJSON(r.Body, &req)
@@ -137,7 +137,7 @@ func (h *AnnotTypeHandler) GetAnnotTypesByIDs() http.HandlerFunc {
 	}
 }
 
-func (h *AnnotTypeHandler) GetAnnotTypesByCreatorID() http.HandlerFunc {
+func (h *AnnotTypeHandlerV1) GetAnnotTypesByCreatorID() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := r.Context().Value(auth_middleware.UserIDContextKey).(uint64)
 		if !ok {
@@ -161,7 +161,7 @@ func (h *AnnotTypeHandler) GetAnnotTypesByCreatorID() http.HandlerFunc {
 	}
 }
 
-func (h *AnnotTypeHandler) DeleteAnnotType() http.HandlerFunc {
+func (h *AnnotTypeHandlerV1) DeleteAnnotType() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req RequestID
 		err := render.DecodeJSON(r.Body, &req)
@@ -181,7 +181,7 @@ func (h *AnnotTypeHandler) DeleteAnnotType() http.HandlerFunc {
 	}
 }
 
-func (h *AnnotTypeHandler) GetAllAnnotTypes() http.HandlerFunc {
+func (h *AnnotTypeHandlerV1) GetAllAnnotTypes() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		markUpTypes, err := h.annotTypeServ.GetAllAnottationTypes()

@@ -28,3 +28,5 @@ reportsCreator
 reports
 imgs
 documents
+*__init__*
+*__pycache__*
