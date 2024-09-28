@@ -117,7 +117,10 @@ func main() {
 	userService := service.NewUserService(log, userRepo)
 
 	//handlers
-	userHandler := user_handler.NewDocumentHandler(log, userService)
+	//user
+	userHandlerV1 := user_handler.NewUserHandlerV1(log, userService)
+	userHandlerV2 := user_handler.NewUserHandlerV2(log, userService)
+	//document
 	documentHandlerV1 := document_handler.NewDocumentHandlerV1(log, documentService)
 	documentHandlerV2 := document_handler.NewDocumentHandlerV2(log, documentService)
 
@@ -132,7 +135,6 @@ func main() {
 
 	//auth service
 	router := chi.NewRouter()
-	//router.Use(middleware.Logger)
 
 	authMiddleware := auth_middleware.NewJwtAuthMiddleware(log, auth_service.SECRET, tokenHandler)
 	accesMiddleware := access_middleware.NewAccessMiddleware(log, userService)
@@ -186,8 +188,8 @@ func main() {
 				//user
 				r.Route("/user", func(r chi.Router) {
 					r.Use(accesMiddleware.AdminOnlyMiddleware)
-					r.Post("/role", userHandler.ChangeUserPerms())
-					r.Get("/getUsers", userHandler.GetAllUsers())
+					r.Post("/role", userHandlerV1.ChangeUserPerms())
+					r.Get("/getUsers", userHandlerV1.GetAllUsers())
 				})
 
 			})
@@ -222,8 +224,8 @@ func main() {
 				r.With(accesMiddleware.ControllersAndHigherMiddleware).Delete("/anottations/{id}", annotHandlerV2.DeleteAnnot())
 
 				// Users
-				r.With(accesMiddleware.AdminOnlyMiddleware).Patch("/users/{id}", nil)
-				r.With(accesMiddleware.AdminOnlyMiddleware).Get("/users", nil)
+				r.With(accesMiddleware.AdminOnlyMiddleware).Patch("/users/{login}", userHandlerV2.ChangeUserPerms())
+				r.With(accesMiddleware.AdminOnlyMiddleware).Get("/users", userHandlerV2.GetAllUsers())
 			})
 
 			//auth, no middleware is required

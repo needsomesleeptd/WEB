@@ -28,6 +28,7 @@ var (
 	ErrDuplicateuserData   = NewUserErr("user with this login already exists\n")
 	ErrDuplicateMarkupType = NewUserErr("ID of this markup already exists\n")
 	ErrViolatingKeyAnnot   = NewUserErr("there is no annot type for this anotattion\n")
+	ErrInvalidRole         = NewUserErr("Role out of bounds\n")
 )
 
 func GetUserError(err error) error { // error which will be returned to user

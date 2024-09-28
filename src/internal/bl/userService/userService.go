@@ -35,6 +35,10 @@ func (serv *UserService) IsRolePermitted(currRole models.Role, reqRole models.Ro
 }
 
 func (serv *UserService) ChangeUserRoleByLogin(login string, role models.Role) error { // Для создания админа, должна быть миграция бд на старте приложения
+	if role < models.Sender || role > models.Admin { // might be really bad
+		return models.ErrInvalidRole
+	}
+
 	user, err := serv.userRepo.GetUserByLogin(login)
 	if err != nil {
 		serv.logger.WithFields(

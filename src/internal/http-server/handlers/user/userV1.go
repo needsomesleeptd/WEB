@@ -28,19 +28,19 @@ type ResponseGetAllUsers struct {
 	Users []models_dto.User `json:"users"`
 }
 
-type UserHandler struct {
+type UserHandlerV1 struct {
 	logger      *logrus.Logger
 	userService service.IUserService
 }
 
-func NewDocumentHandler(logSrc *logrus.Logger, serv service.IUserService) UserHandler {
-	return UserHandler{
+func NewUserHandlerV1(logSrc *logrus.Logger, serv service.IUserService) UserHandlerV1 {
+	return UserHandlerV1{
 		logger:      logSrc,
 		userService: serv,
 	}
 }
 
-func (h *UserHandler) ChangeUserPerms() http.HandlerFunc {
+func (h *UserHandlerV1) ChangeUserPerms() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req RequestChangeRole
 		err := render.DecodeJSON(r.Body, &req)
@@ -60,7 +60,7 @@ func (h *UserHandler) ChangeUserPerms() http.HandlerFunc {
 	}
 }
 
-func (h *UserHandler) GetAllUsers() http.HandlerFunc {
+func (h *UserHandlerV1) GetAllUsers() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		users, err := h.userService.GetAllUsers()

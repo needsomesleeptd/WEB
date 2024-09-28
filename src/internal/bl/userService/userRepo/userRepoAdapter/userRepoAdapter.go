@@ -48,7 +48,7 @@ func (repo *UserRepositoryAdapter) GetUserByLogin(login string) (*models.User, e
 func (repo *UserRepositoryAdapter) UpdateUserByLogin(login string, user *models.User) error {
 	userDA := models_da.ToDaUser(*user)
 
-	tx := repo.db.Model(&models_da.User{}).Where("login = ?", login).Updates(userDA)
+	tx := repo.db.Model(&models_da.User{}).Where("login = ?", login).Select("role").Updates(userDA)
 	if tx.Error != nil {
 		return errors.Wrap(tx.Error, "Error in updating user")
 	}
