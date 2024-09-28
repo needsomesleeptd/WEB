@@ -6,6 +6,7 @@ import (
 	report_creator "annotater/internal/bl/reportCreatorService/reportCreator"
 	"annotater/internal/models"
 	"bytes"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -59,6 +60,7 @@ func (serv *ReportCreatorService) NNMarkupsReq(document models.DocumentData) ([]
 		ids[i] = markups[i].ClassLabel
 	}
 	serv.logger.Infof("report creator svc - successfully got markups for document with id %v", document.ID)
+	fmt.Print(ids)
 	markupTypes, err := serv.annotTypeRepo.GetAnottationTypesByIDs(ids)
 	if err != nil {
 		serv.logger.Warnf("report creator svc - failed to get markups for document with id %v", document.ID)

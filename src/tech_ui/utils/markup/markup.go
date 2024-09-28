@@ -16,7 +16,7 @@ import (
 var (
 	annotFileFieldName = "annotFile"
 	bbsFieldName       = "jsonBbs"
-	annotsUrlPath      = "http://localhost:8080/annot/"
+	annotsUrlPath      = "http://localhost:8080/api/v1/annot/"
 )
 
 func AddMarkup(client *http.Client, filePath string, bbs []float32, classLabel uint64, jwtToken string) error {

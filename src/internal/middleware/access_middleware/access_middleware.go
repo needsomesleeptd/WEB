@@ -60,8 +60,9 @@ func (ac *AccessMiddleware) AdminOnlyMiddleware(next http.Handler) http.Handler 
 					"userID": userID,
 					"role":   role}).
 				Info("role is not enough")
-			render.JSON(w, r, response.Error(ErrAccessDeniedServer.Error()))
-			render.Status(r, http.StatusForbidden)
+			//render.JSON(w, r, response.Error(ErrAccessDeniedServer.Error()))
+			//render.Status(r, http.StatusForbidden)
+			w.WriteHeader(http.StatusForbidden)
 			return
 		}
 
@@ -86,8 +87,8 @@ func (ac *AccessMiddleware) ControllersAndHigherMiddleware(next http.Handler) ht
 				logrus.Fields{
 					"src": "AccessMiddleware.ControllersAndHigherMiddleware"}).
 				Info("no valid userID in context")
-			render.JSON(w, r, response.Error(ErrInternalServer.Error()))
-			render.Status(r, http.StatusBadRequest)
+			//render.JSON(w, r, response.Error(ErrInternalServer.Error()))
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
@@ -98,8 +99,8 @@ func (ac *AccessMiddleware) ControllersAndHigherMiddleware(next http.Handler) ht
 					"src":    "AccessMiddleware.ControllersAndHigherMiddleware",
 					"userID": userID}).
 				Info("no valid role in context")
-			render.JSON(w, r, response.Error(ErrInternalServer.Error()))
-			render.Status(r, http.StatusBadRequest)
+			//render.JSON(w, r, response.Error(ErrInternalServer.Error()))
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		if !ac.userService.IsRolePermitted(role, models.Controller) {
@@ -109,8 +110,9 @@ func (ac *AccessMiddleware) ControllersAndHigherMiddleware(next http.Handler) ht
 					"userID": userID,
 					"role":   role}).
 				Info("role is not enough")
-			render.JSON(w, r, response.Error(ErrAccessDeniedServer.Error()))
-			render.Status(r, http.StatusForbidden)
+
+			//render.JSON(w, r, response.Error(ErrAccessDeniedServer.Error()))
+			w.WriteHeader(http.StatusForbidden)
 			return
 		}
 

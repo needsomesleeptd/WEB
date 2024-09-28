@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	gettinAllUsersUrlPath = "http://localhost:8080/user/getUsers"
+	gettinAllUsersUrlPath = "http://localhost:8080/api/v1/user/getUsers"
 )
 
 func GetAllUsers(client *http.Client, jwtToken string) ([]models_dto.User, error) {

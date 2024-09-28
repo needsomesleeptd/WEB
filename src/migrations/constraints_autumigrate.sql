@@ -43,3 +43,7 @@ VALUES (154,'Отсутствует знак препинания в конце 
 
 INSERT INTO markup_types (id,description,creator_id,class_name)
 VALUES (0,'Ошибок нет, все хорошо))',1,'no_errors');
+
+--admin
+INSERT INTO users (id, login, password, name, surname, role, group)
+VALUES (9, 'admin', '$2a$10$nV.DqaVAtAr9EhCRqseU6OikgPC1GCIYsmb3Enh5pGwTwa/VntK8K', '<string>', '<string>', 2, '<string>');

@@ -2,14 +2,12 @@ package auth_middleware
 
 import (
 	auth_service "annotater/internal/bl/auth"
-	response "annotater/internal/lib/api"
 	"annotater/internal/models"
 	auth_utils "annotater/internal/pkg/authUtils"
 	"context"
 	"net/http"
 	"strings"
 
-	"github.com/go-chi/render"
 	"github.com/sirupsen/logrus"
 )
 
@@ -50,8 +48,8 @@ func (m *JwtAuthMiddleware) MiddlewareFunc(next http.Handler) http.Handler {
 		token := r.Header.Get("Authorization")
 		if token == "" {
 			m.logger.Info("user with no token came")
-			render.JSON(w, r, response.Error("Error in parsing token"))
-			render.Status(r, http.StatusBadRequest)
+			//render.JSON(w, r, response.Error("Error in parsing token"))
+			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 		token = strings.TrimPrefix(token, "Bearer ")
@@ -60,12 +58,14 @@ func (m *JwtAuthMiddleware) MiddlewareFunc(next http.Handler) http.Handler {
 		if err != nil {
 			if err == auth_utils.ErrParsingToken {
 				m.logger.Info("user with invalid jwt came")
-				render.JSON(w, r, response.Error(err.Error()))
-				render.Status(r, http.StatusBadRequest)
+				//render.JSON(w, r, response.Error(err.Error()))
+				//render.Status(r, http.StatusUnauthorized)
+				w.WriteHeader(http.StatusUnauthorized)
 			} else {
 				m.logger.Info("user with invalid jwt came")
-				render.JSON(w, r, response.Error(err.Error()))
-				render.Status(r, http.StatusUnauthorized)
+				//render.JSON(w, r, response.Error(err.Error()))
+				//render.Status(r, http.StatusUnauthorized)
+				w.WriteHeader(http.StatusUnauthorized)
 			}
 			return
 		}

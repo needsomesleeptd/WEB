@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	roleChangeUrlPath = "http://localhost:8080/user/role"
+	roleChangeUrlPath = "http://localhost:8080/api/v1/user/role"
 )
 
 func ChangeUserRole(client *http.Client, login string, wantedRole models.Role, jwtToken string) error {

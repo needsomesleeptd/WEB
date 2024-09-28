@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	authPath = "http://localhost:8080/user/"
+	authPath = "http://localhost:8080/api/v1/user/"
 )
 
 func AddJwtHeader(req *http.Request, jwtToken string) {

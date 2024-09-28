@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	documentPathUrl = "http://localhost:8080/document/"
+	documentPathUrl = "http://localhost:8080/api/v1/document/"
 	formFileName    = "file"
 	EXT             = ".pdf"
 )

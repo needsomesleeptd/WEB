@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	annotTypesUrlPath = "http://localhost:8080/annotType/"
+	annotTypesUrlPath = "http://localhost:8080/api/v1/annotType/"
 )
 
 func GetMarkupTypesCreatorID(client *http.Client, jwtToken string) ([]models_dto.MarkupType, error) {

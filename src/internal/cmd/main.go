@@ -34,6 +34,7 @@ import (
 	"syscall"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -117,11 +118,17 @@ func main() {
 
 	//handlers
 	userHandler := user_handler.NewDocumentHandler(log, userService)
-	documentHandler := document_handler.NewDocumentHandler(log, documentService)
-	annotHandler := annot_handler.NewAnnotHandler(log, annotService)
+	documentHandlerV1 := document_handler.NewDocumentHandlerV1(log, documentService)
+	documentHandlerV2 := document_handler.NewDocumentHandlerV2(log, documentService)
+
+	annotHandlerV1 := annot_handler.NewAnnotHandlerV1(log, annotService)
+	annotHandlerV2 := annot_handler.NewAnnotHandlerV2(log, annotService)
+
 	annotTypeHandler := annot_type_handler.NewAnnotTypehandler(log, annotTypeService)
 
-	authHandler := auth_handler.NewAuthHandler(log, authService)
+	authHandlerV1 := auth_handler.NewAuthHandlerV1(log, authService)
+	authHandlerV2 := auth_handler.NewAuthHandlerV2(log, authService)
+
 	//auth service
 	router := chi.NewRouter()
 	//router.Use(middleware.Logger)
@@ -129,60 +136,99 @@ func main() {
 	authMiddleware := auth_middleware.NewJwtAuthMiddleware(log, auth_service.SECRET, tokenHandler)
 	accesMiddleware := access_middleware.NewAccessMiddleware(log, userService)
 
-	router.Group(func(r chi.Router) { // group for which auth middleware is required
-		r.Use(authMiddleware.MiddlewareFunc)
+	router.Use(middleware.Logger)
 
-		// Document
-		r.Route("/document", func(r chi.Router) {
-			r.Post("/report", documentHandler.CreateReport())
-			r.Get("/getDocument", documentHandler.GetDocumentByID())
-			r.Get("/getReport", documentHandler.GetReportByID())
-			r.Get("/getDocumentsMeta", documentHandler.GetDocumentsMetaData())
+	router.Route("/api", func(r chi.Router) {
+		r.Route("/v1", func(r chi.Router) {
+			r.Group(func(r chi.Router) { // group for which auth middleware is required
+				r.Use(authMiddleware.MiddlewareFunc)
+
+				// Document
+				r.Route("/document", func(r chi.Router) {
+					r.Post("/report", documentHandlerV1.CreateReport())
+					r.Get("/getDocument", documentHandlerV1.GetDocumentByID())
+					r.Get("/getReport", documentHandlerV1.GetReportByID())
+					r.Get("/getDocumentsMeta", documentHandlerV1.GetDocumentsMetaData())
+				})
+
+				// AnnotType
+				r.Route("/annotType", func(r chi.Router) {
+					r.Use(accesMiddleware.ControllersAndHigherMiddleware) // apply the desired middleware here
+
+					adminOnlyAnnotTypes := r.Group(nil)
+					adminOnlyAnnotTypes.Use(accesMiddleware.AdminOnlyMiddleware)
+
+					r.Post("/add", annotTypeHandler.AddAnnotType())
+					r.Get("/get", annotTypeHandler.GetAnnotType())
+
+					r.Get("/creatorID", annotTypeHandler.GetAnnotTypesByCreatorID())
+
+					r.Get("/gets", annotTypeHandler.GetAnnotTypesByIDs())
+
+					adminOnlyAnnotTypes.Delete("/delete", annotTypeHandler.DeleteAnnotType())
+					r.Get("/getsAll", annotTypeHandler.GetAllAnnotTypes())
+
+				})
+				//Annot
+				r.Route("/annot", func(r chi.Router) {
+					r.Use(accesMiddleware.ControllersAndHigherMiddleware)
+					//adminOnlyAnnots := r.Group(nil)
+					//adminOnlyAnnots.Use(accesMiddleware.AdminOnlyMiddleware)
+
+					r.Post("/add", annotHandlerV1.AddAnnot())
+					r.Get("/get", annotHandlerV1.GetAnnot())
+					r.Get("/creatorID", annotHandlerV1.GetAnnotsByUserID())
+
+					r.Delete("/delete", annotHandlerV1.DeleteAnnot())
+					r.Get("/getsAll", annotHandlerV1.GetAllAnnots())
+				})
+				//user
+				r.Route("/user", func(r chi.Router) {
+					r.Use(accesMiddleware.AdminOnlyMiddleware)
+					r.Post("/role", userHandler.ChangeUserPerms())
+					r.Get("/getUsers", userHandler.GetAllUsers())
+				})
+
+			})
+
+			//auth, no middleware is required
+			router.Post("/user/SignUp", authHandlerV1.SignUp())
+			router.Post("/user/SignIn", authHandlerV1.SignIn())
 		})
 
-		// AnnotType
-		r.Route("/annotType", func(r chi.Router) {
-			r.Use(accesMiddleware.ControllersAndHigherMiddleware) // apply the desired middleware here
+		r.Route("/v2", func(r chi.Router) {
+			r.Group(func(r chi.Router) { // group for which auth middleware is required
+				r.Use(authMiddleware.MiddlewareFunc)
 
-			adminOnlyAnnotTypes := r.Group(nil)
-			adminOnlyAnnotTypes.Use(accesMiddleware.AdminOnlyMiddleware)
+				// Document
+				r.Post("/documents", documentHandlerV2.CreateReport())
+				r.Get("/documents", documentHandlerV2.GetDocumentsMetaData())
+				r.Get("/documents/{id}", documentHandlerV2.GetDocumentByID())
 
-			r.Post("/add", annotTypeHandler.AddAnnotType())
-			r.Get("/get", annotTypeHandler.GetAnnotType())
+				// Reports
+				r.Get("/documents/{id}/reports", documentHandlerV2.GetReportByID())
 
-			r.Get("/creatorID", annotTypeHandler.GetAnnotTypesByCreatorID())
+				// AnnotTypes
+				r.With(accesMiddleware.ControllersAndHigherMiddleware).Post("/anottationTypes", nil) //smth
+				r.With(accesMiddleware.ControllersAndHigherMiddleware).Get("/anottationTypes", nil)
+				r.With(accesMiddleware.ControllersAndHigherMiddleware).Get("/anottationTypes/{id}", nil)
 
-			r.Get("/gets", annotTypeHandler.GetAnnotTypesByIDs())
+				// Annots
+				r.With(accesMiddleware.ControllersAndHigherMiddleware).Post("/anottations", annotHandlerV2.AddAnnot()) //smth
+				r.With(accesMiddleware.ControllersAndHigherMiddleware).Get("/anottations", annotHandlerV2.GetAllAnnots())
+				r.With(accesMiddleware.ControllersAndHigherMiddleware).Get("/anottations/{id}", annotHandlerV2.GetAnnot())
+				r.With(accesMiddleware.ControllersAndHigherMiddleware).Delete("/anottations/{id}", annotHandlerV2.DeleteAnnot())
 
-			adminOnlyAnnotTypes.Delete("/delete", annotTypeHandler.DeleteAnnotType())
-			r.Get("/getsAll", annotTypeHandler.GetAllAnnotTypes())
+				// Users
+				r.With(accesMiddleware.AdminOnlyMiddleware).Patch("/users/{id}", nil)
+				r.With(accesMiddleware.AdminOnlyMiddleware).Get("/users", nil)
+			})
 
+			//auth, no middleware is required
+			r.Post("/auth", authHandlerV2.Auth())
+			r.Post("/register", authHandlerV2.Register())
 		})
-		//Annot
-		r.Route("/annot", func(r chi.Router) {
-			r.Use(accesMiddleware.ControllersAndHigherMiddleware)
-			//adminOnlyAnnots := r.Group(nil)
-			//adminOnlyAnnots.Use(accesMiddleware.AdminOnlyMiddleware)
-
-			r.Post("/add", annotHandler.AddAnnot())
-			r.Get("/get", annotHandler.GetAnnot())
-			r.Get("/creatorID", annotHandler.GetAnnotsByUserID())
-
-			r.Delete("/delete", annotHandler.DeleteAnnot())
-			r.Get("/getsAll", annotHandler.GetAllAnnots())
-		})
-		//user
-		r.Route("/user", func(r chi.Router) {
-			r.Use(accesMiddleware.AdminOnlyMiddleware)
-			r.Post("/role", userHandler.ChangeUserPerms())
-			r.Get("/getUsers", userHandler.GetAllUsers())
-		})
-
 	})
-
-	//auth, no middleware is required
-	router.Post("/user/SignUp", authHandler.SignUp())
-	router.Post("/user/SignIn", authHandler.SignIn())
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
