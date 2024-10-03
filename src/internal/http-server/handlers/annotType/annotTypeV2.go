@@ -8,6 +8,7 @@ import (
 	"annotater/internal/models"
 	models_dto "annotater/internal/models/dto"
 	auth_utils "annotater/internal/pkg/authUtils"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -45,14 +46,16 @@ func (h *AnnotTypeHandlerV2) AddAnnotType() http.HandlerFunc {
 		if !ok {
 			h.log.Warnf("cannot get userID from jwt %v in middleware", auth_utils.ExtractTokenFromReq(r))
 			w.WriteHeader(http.StatusBadRequest)
-			render.JSON(w, r, response.Error("Invalud ID type")) //TODO:: add logging here
+			render.JSON(w, r, response.ErrorV2("Invalid userID type"))
 			return
 		}
-		err := render.DecodeJSON(r.Body, &req)
+		d := json.NewDecoder(r.Body)
+		d.DisallowUnknownFields()
+		err := d.Decode(&req)
 		if err != nil {
 			h.log.Warnf("unable to decode request with userID %v:%v", userID, err)
 			w.WriteHeader(http.StatusBadRequest)
-			render.JSON(w, r, response.Error(ErrBrokenRequest.Error())) //TODO:: add logging here
+			render.JSON(w, r, response.ErrorV2(ErrBrokenRequest.Error()))
 			return
 		}
 		markupType := models.MarkupType{
@@ -65,7 +68,7 @@ func (h *AnnotTypeHandlerV2) AddAnnotType() http.HandlerFunc {
 			if errors.Is(err, models.ErrDuplicateMarkupType) ||
 				errors.Is(err, service.ErrInsertingEmptyClass) {
 				w.WriteHeader(http.StatusBadRequest)
-				render.JSON(w, r, response.Error(models.GetUserError(err).Error()))
+				render.JSON(w, r, response.ErrorV2(models.GetUserError(err).Error()))
 			}
 			h.log.Warn(err.Error())
 			return
@@ -81,9 +84,9 @@ func (h *AnnotTypeHandlerV2) GetAllAnnotTypes() http.HandlerFunc {
 
 		markUpTypes, err := h.annotTypeServ.GetAllAnottationTypes()
 		if err != nil {
-			h.log.Warnf("unable to get all annot types %v\n", err.Error())
-			//render.JSON(w, r, response.Error(models.GetUserError(err).Error()))
 			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Warnf("unable to get all annot types %v\n", err.Error())
+			//render.JSON(w, r, response.ErrorV2(models.GetUserError(err).Error()))
 			return
 		}
 		resp := ResponseGetTypesV2{
@@ -101,14 +104,14 @@ func (h *AnnotTypeHandlerV2) DeleteAnnotType() http.HandlerFunc {
 		annotTypeUint64ID, err := strconv.ParseUint(annotTypeIDStr, 10, 64)
 		if err != nil {
 			h.log.Warnf(logger_setup.UnableToDecodeUserReqF, err.Error())
-			render.JSON(w, r, response.Error(models.ErrDecodingRequest.Error()))
 			w.WriteHeader(http.StatusBadRequest)
+			render.JSON(w, r, response.ErrorV2("invalid annotID"))
 		}
 		err = h.annotTypeServ.DeleteAnotattionType(annotTypeUint64ID)
 		if err != nil {
 			if errors.Is(err, models.ErrNotFound) {
 				w.WriteHeader(http.StatusBadRequest)
-				render.JSON(w, r, response.Error(models.GetUserError(err).Error()))
+				render.JSON(w, r, response.ErrorV2(models.GetUserError(err).Error()))
 			} else {
 				w.WriteHeader(http.StatusInternalServerError)
 			}

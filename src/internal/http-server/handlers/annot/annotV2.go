@@ -7,6 +7,8 @@ import (
 	"annotater/internal/models"
 	models_dto "annotater/internal/models/dto"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -69,30 +71,33 @@ func (h *AnnotHandlerV2) AddAnnot() http.HandlerFunc {
 		userID := r.Context().Value(auth_middleware.UserIDContextKey).(uint64)
 		file, _, err := r.FormFile(AnnotFileFieldName)
 		if err != nil {
-			render.JSON(w, r, response.Error(models.GetUserError(err).Error())) //TODO:: add logging here
+			w.WriteHeader(http.StatusBadRequest)
+			render.JSON(w, r, response.ErrorV2("invalid file")) //TODO:: add logging here
 			h.log.Warn(err)
 			return
 		}
 		pageData, err = io.ReadAll(file)
 		if err != nil {
-			render.JSON(w, r, response.Error(models.GetUserError(err).Error())) //TODO:: add logging here
+			w.WriteHeader(http.StatusBadRequest)
+			render.JSON(w, r, response.ErrorV2(models.GetUserError(err).Error())) //TODO:: add logging here
 			h.log.Warn(err)
 			return
 		}
 		classTypeString := r.FormValue(ClassTypeFieldNameV2)
 		bbsString := r.FormValue(BbsFieldNameV2)
+
 		err = json.Unmarshal([]byte(classTypeString), &req.ClassLabel)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			//render.JSON(w, r, response.Error(models.GetUserError(err).Error())) //TODO:: add logging here
+			render.JSON(w, r, response.ErrorV2(models.ErrDecodingRequest.Error())) //TODO:: add logging here
 			h.log.Warn(err)
 			return
 		}
-
+		fmt.Printf("values of bbs %v", bbsString)
 		err = json.Unmarshal([]byte(bbsString), &req.ErrorBB)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			//render.JSON(w, r, response.Error(models.GetUserError(err).Error())) //TODO:: add logging here
+			render.JSON(w, r, response.ErrorV2(models.ErrDecodingRequest.Error())) //TODO:: add logging here
 			h.log.Warn(err)
 			return
 		}
@@ -105,7 +110,8 @@ func (h *AnnotHandlerV2) AddAnnot() http.HandlerFunc {
 		}
 		err = h.annotService.AddAnottation(&annot)
 		if err != nil {
-			render.JSON(w, r, response.Error(models.GetUserError(err).Error()))
+			w.WriteHeader(http.StatusInternalServerError)
+			//render.JSON(w, r, response.ErrorV2(models.GetUserError(err).Error()))
 			h.log.Error(err)
 			return
 		}
@@ -119,13 +125,13 @@ func (h *AnnotHandlerV2) GetAnnot() http.HandlerFunc {
 		annotIDStr := chi.URLParam(r, "id")
 		annotUint64ID, err := strconv.ParseUint(annotIDStr, 10, 64)
 		if err != nil {
-			render.JSON(w, r, response.Error(ErrDecodingRequest.Error()))
 			w.WriteHeader(http.StatusBadRequest)
+			render.JSON(w, r, response.ErrorV2(ErrDecodingRequest.Error()))
 		}
 		// Retrieve the annotation from the database or storage
 		annot, err := h.annotService.GetAnottationByID(annotUint64ID)
 		if err != nil {
-			if err != models.ErrNotFound {
+			if !errors.Is(err, models.ErrNotFound) {
 				w.WriteHeader(http.StatusInternalServerError)
 			} else {
 				w.WriteHeader(http.StatusNotFound)
@@ -194,14 +200,16 @@ func (h *AnnotHandlerV2) GetAllAnnots() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := r.Context().Value(auth_middleware.UserIDContextKey).(uint64)
 		if !ok {
-			render.JSON(w, r, response.Error(ErrDecodingRequest.Error())) //TODO:: add logging here
+			w.WriteHeader(http.StatusBadRequest)
+			render.JSON(w, r, response.ErrorV2("Invalid JWT struct")) //TODO:: add logging here
 			h.log.Warn("cannot get userIDfrom jwt in middleware")
 			return
 		}
 
 		markUps, err := h.annotService.GetAllAnottations()
 		if err != nil {
-			render.JSON(w, r, response.Error(models.GetUserError(err).Error()))
+			w.WriteHeader(http.StatusInternalServerError)
+			//render.JSON(w, r, response.ErrorV2(models.GetUserError(err).Error()))
 			h.log.Warn(err)
 			return
 		}
@@ -216,13 +224,18 @@ func (h *AnnotHandlerV2) DeleteAnnot() http.HandlerFunc {
 		annotIDStr := chi.URLParam(r, "id")
 		annotUint64ID, err := strconv.ParseUint(annotIDStr, 10, 64)
 		if err != nil {
-			render.JSON(w, r, response.Error(ErrDecodingRequest.Error()))
 			w.WriteHeader(http.StatusBadRequest)
+			render.JSON(w, r, response.ErrorV2("invalid annotID"))
 		}
 
 		err = h.annotService.DeleteAnotattion(annotUint64ID)
+		if errors.Is(err, models.ErrNotFound) {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 		if err != nil {
-			render.JSON(w, r, response.Error(models.GetUserError(err).Error()))
+			w.WriteHeader(http.StatusInternalServerError)
+			//render.JSON(w, r, response.ErrorV2(models.GetUserError(err).Error()))
 			h.log.Warn(err)
 			return
 		}

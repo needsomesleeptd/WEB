@@ -50,7 +50,7 @@ func (h *AuthHandlerV2) Register() http.HandlerFunc {
 		err := render.DecodeJSON(r.Body, &req)
 		if err != nil {
 			h.log.Warnf(logger_setup.UnableToDecodeUserReqF, err)
-			render.JSON(w, r, response.Error(ErrDecodingJson.Error())) //TODO:: add logging here
+			render.JSON(w, r, response.ErrorV2(ErrDecodingJson.Error())) //TODO:: add logging here
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -63,7 +63,7 @@ func (h *AuthHandlerV2) Register() http.HandlerFunc {
 				errors.Is(err, auth_service.ErrNoLogin) ||
 				errors.Is(err, auth_service.ErrNoPasswd) {
 				w.WriteHeader(http.StatusBadRequest)
-				render.JSON(w, r, response.Error(models.GetUserError(err).Error()))
+				render.JSON(w, r, response.ErrorV2(models.GetUserError(err).Error()))
 				return
 			} else {
 				w.WriteHeader(http.StatusInternalServerError)
@@ -83,7 +83,7 @@ func (h *AuthHandlerV2) Auth() http.HandlerFunc {
 		err := render.DecodeJSON(r.Body, &req)
 		if err != nil {
 			h.log.Warnf(logger_setup.UnableToDecodeUserReqF, err)
-			render.JSON(w, r, ResponseSignIn{Response: response.Error(ErrDecodingJson.Error())})
+			render.JSON(w, r, ResponseSignIn{Response: response.ErrorV2(ErrDecodingJson.Error())})
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -98,7 +98,7 @@ func (h *AuthHandlerV2) Auth() http.HandlerFunc {
 				errors.Is(err, models.ErrNotFound) ||
 				errors.Is(err, service.ErrWrongPassword) {
 				w.WriteHeader(http.StatusBadRequest)
-				render.JSON(w, r, response.Error(models.GetUserError(err).Error()))
+				render.JSON(w, r, response.ErrorV2(models.GetUserError(err).Error()))
 				return
 			} else {
 				w.WriteHeader(http.StatusInternalServerError)

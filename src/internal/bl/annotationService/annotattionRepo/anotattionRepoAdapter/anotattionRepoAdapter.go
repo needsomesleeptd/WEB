@@ -41,6 +41,12 @@ func (repo *AnotattionRepositoryAdapter) AddAnottation(markUp *models.Markup) er
 }
 
 func (repo *AnotattionRepositoryAdapter) DeleteAnotattion(id uint64) error { // do we need transactions here?
+
+	err := repo.db.Where("id = ?", id).First(&models_da.Markup{}).Error // don't know wether we neeed that
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return models.ErrNotFound
+	}
+
 	tx := repo.db.Where("id = ?", id) //using that because if id is equal to 0 then the first found row will be deleted
 	if tx.Error != nil {
 		return errors.Wrap(tx.Error, "Error in deleting anotattion")

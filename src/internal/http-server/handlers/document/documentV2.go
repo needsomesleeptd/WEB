@@ -5,6 +5,7 @@ import (
 	response "annotater/internal/lib/api"
 	"annotater/internal/middleware/auth_middleware"
 	"annotater/internal/models"
+	auth_utils "annotater/internal/pkg/authUtils"
 	pdf_utils "annotater/internal/pkg/pdfUtils"
 	"errors"
 	"io"
@@ -16,6 +17,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
+
+type ResponseGettingMetaDataV2 struct {
+	DocumentsMetaData []models.DocumentMetaData `json:"documents_metadata"`
+}
 
 const (
 	CustomHeaderFilename = "filename"
@@ -45,7 +50,7 @@ func (h *DocumenthandlerV2) GetDocumentByID() http.HandlerFunc {
 		documentUUID, err := uuid.Parse(documentID)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			render.JSON(w, r, response.Error(ErrBrokenRequest.Error()))
+			render.JSON(w, r, response.ErrorV2("invalid documentID"))
 			return
 		}
 		document, err := h.docService.GetDocumentByID(documentUUID)
@@ -75,7 +80,7 @@ func (h *DocumenthandlerV2) GetReportByID() http.HandlerFunc {
 		documentUUID, err := uuid.Parse(documentID)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			render.JSON(w, r, response.Error(ErrBrokenRequest.Error()))
+			render.JSON(w, r, response.ErrorV2("invalid documentID"))
 			return
 		}
 		report, err := h.docService.GetReportByID(documentUUID)
@@ -101,7 +106,13 @@ func (h *DocumenthandlerV2) GetReportByID() http.HandlerFunc {
 
 func (h *DocumenthandlerV2) GetDocumentsMetaData() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID := r.Context().Value(auth_middleware.UserIDContextKey).(uint64)
+		userID, ok := r.Context().Value(auth_middleware.UserIDContextKey).(uint64)
+		if !ok {
+			h.logger.Warnf("cannot get userID from jwt %v in middleware", auth_utils.ExtractTokenFromReq(r))
+			w.WriteHeader(http.StatusBadRequest)
+			render.JSON(w, r, response.ErrorV2("Invalid userID type"))
+			return
+		}
 		documentsMetaData, err := h.docService.GetDocumentsByCreatorID(userID)
 		if err != nil {
 			if errors.Is(err, models.ErrNotFound) {
@@ -113,15 +124,26 @@ func (h *DocumenthandlerV2) GetDocumentsMetaData() http.HandlerFunc {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		resp := ResponseGettingMetaData{Response: response.OK(), DocumentsMetaData: documentsMetaData}
+		resp := ResponseGettingMetaDataV2{DocumentsMetaData: documentsMetaData}
 		render.JSON(w, r, resp)
 	}
 }
 
 func (h *DocumenthandlerV2) CreateReport() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID := r.Context().Value(auth_middleware.UserIDContextKey).(uint64)
+		userID, ok := r.Context().Value(auth_middleware.UserIDContextKey).(uint64)
+		if !ok {
+			h.logger.Warnf("cannot get userID from jwt %v in middleware", auth_utils.ExtractTokenFromReq(r))
+			w.WriteHeader(http.StatusBadRequest)
+			render.JSON(w, r, response.ErrorV2("Invalid userID type"))
+			return
+		}
 		pdfBytes, err := io.ReadAll(r.Body)
+		if err != nil {
+			h.logger.Error(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		defer r.Body.Close()
 
 		var pagesCount int
@@ -149,7 +171,7 @@ func (h *DocumenthandlerV2) CreateReport() http.HandlerFunc {
 		if err != nil {
 			if errors.Is(err, service.ErrDocumentFormat) {
 				w.WriteHeader(http.StatusBadRequest)
-				render.JSON(w, r, response.Error(models.GetUserError(err).Error()))
+				render.JSON(w, r, response.ErrorV2(models.GetUserError(err).Error()))
 			} else {
 				w.WriteHeader(http.StatusInternalServerError)
 			}

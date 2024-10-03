@@ -14,7 +14,7 @@ import (
 
 var (
 	ErrChangingRole    = errors.New("error changing role")
-	ErrDecodingJson    = errors.New("broken request")
+	ErrDecodingJson    = errors.New("invalid json")
 	ErrGettingAllUsers = errors.New("error getting all users")
 )
 

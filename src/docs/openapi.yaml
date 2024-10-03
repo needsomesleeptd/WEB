@@ -1,0 +1,652 @@
+openapi: 3.0.0
+info:
+  title: Система проверки соответствия документов
+  description: API для системы проверки документов в соответствии с установленными стандартами (например, ГОСТ).
+  version: 1.0.0
+
+
+servers:
+  - url: http://localhost:8080/api/v2
+
+tags:
+  - name: Documents
+    description: Операции с документами
+  - name: Users
+
+    description: Управление пользователями
+  - name: AnnotationTypes
+    description: Управление типами разметок
+  - name: Annotations
+    description: Управление разметками
+  - name: Auth
+    description: Управление аутенфикацией поьзователей
+  - name: Reports
+    description: Операции с отчетами
+
+paths:
+  /documents:
+    post:
+      tags:
+        - Documents
+      summary: Загрузить документ на проверку (получим отчет)
+      security:
+      - Bearer: []
+      operationId: uploadDocument
+      parameters:
+      - name: filename
+        in: header
+        required: true
+        description: Название файла при сохранении
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+         application/pdf:
+              schema:
+                type: string
+                format: binary
+                example: X123fdsfdsa...
+                
+      responses:
+        '200':
+          description: Документ успешно загружен
+        '400':
+          description: Ошибка в запросе
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '401':
+          description: Пользователь не авториизован
+        '500':
+          description: Ошибка при обработке сервером
+          
+
+          
+
+    get:
+      tags:
+        - Documents
+      summary: Получить список описания документов пользователя
+      security:
+      - Bearer: []
+      operationId: listDocuments
+      responses:
+        '200':
+          description: Список описания документов пользователя
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Document'
+        '401':
+          description: Пользователь не авториизован
+        '500':
+          description: Ошибка при обработке сервером
+        '400':
+          description: Ошибка в запросе
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+      
+      
+
+  /documents/{id}:
+    get:
+      tags:
+        - Documents
+      summary: Получить документ
+      security:
+      - Bearer: []
+      operationId: getDocumentResults
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор документа
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Результаты проверки
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+                example: X123fdsfdsa...
+        '401':
+          description: Пользователь не авториизован
+        '500':
+          description: Ошибка при обработке сервером
+        '404':
+          description: Файл не найден
+        '400':
+          description: Ошибка в запросе
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        
+          
+  
+  /documents/{id}/reports:
+    get:
+      tags:
+        - Reports
+      summary: Получить отчет по документу
+      security:
+      - Bearer: []
+      operationId: getReportResults
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор документа(отчета)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Результаты проверки
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+                example: X123fdsfdsa...
+        '401':
+          description: Пользователь не авториизован
+        '500':
+          description: Ошибка при обработке сервером
+        '404':
+          description: Файл не найден
+
+  /annotationTypes:
+    post:
+      tags:
+        - AnnotationTypes
+      summary: Создать новый тип разметки
+      security:
+      - Bearer: []
+      operationId: createAnnotationType
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkupType'
+      responses:
+        '200':
+          description: Тип разметки успешно создан
+        '401':
+          description: Пользователь не авториизован
+        '500':
+          description: Ошибка при обработке сервером
+        '403':
+          description: У пользователя недостаточно прав
+        '400':
+          description: Ошибка в запросе
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+    get:
+      tags:
+        - AnnotationTypes
+      summary: Получить список типов разметок
+      security:
+      - Bearer: []
+      operationId: getAnnotationTypes
+      responses:
+        '200':
+          description: Результаты запроса
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MarkupType'
+        '401':
+          description: Пользователь не авторизован
+        '500':
+          description: Ошибка при обработке сервером
+        '403':
+          description: У пользователя недостаточно прав
+        
+  
+  /annotationTypes/{id}:
+    delete:
+      tags:
+        - AnnotationTypes
+      summary: Удалить тип разметки
+      security:
+      - Bearer: []
+      operationId: deleteAnnotationType
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор типа разметки для удаления
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Тип разметки успешно удалён
+        '401':
+          description: Пользователь не авторизован
+        '500':
+          description: Ошибка при обработке сервером
+        '403':
+          description: У пользователя недостаточно прав
+        '400':
+          description: Ошибка в запросе
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+
+
+  
+
+  
+
+
+
+   
+
+  /auth:
+    post:
+      tags:
+        - Auth
+      summary: Вход в систему
+      security:
+      - Bearer: []
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                login:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Успешная аутентификация
+        '400':
+          description: Ошибка в запросе
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Ошибка при обработке сервером
+  /register:
+    post:
+      tags:
+        - Auth
+      summary: Аутенфикация
+      security:
+      - Bearer: []
+      operationId: AuthUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: Успешная аутентификация
+        '400':
+          description: Ошибка в запросе
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Ошибка при обработке сервером
+
+  /users/{id}:
+    patch:
+      tags:
+        - Users
+      summary: Изменить роль пользователя
+      security:
+      - Bearer: []
+      operationId: changeUserRole
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор пользователя
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                req_role:
+                  type: string
+                  enum: ['user', 'controller', 'admin']
+      responses:
+        '200':
+          description: Роль пользователя успешно изменена
+        '401':
+          description: Пользователь не авторизован
+        '500':
+          description: Ошибка при обработке сервером
+        '403':
+          description: У пользователя недостаточно прав
+        '404':
+          description: Пользователь для изменения роли не найден
+        '400':
+            description: Ошибка в запросе
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    error:
+                      type: string
+
+  /users:
+    get:
+      tags: 
+        - Users
+      summary: Получение информации о всех пользователях 
+      description: Получение информации о всех пользователях 
+      security:
+      - Bearer: []
+      responses:
+          '200':
+            description: Информация о пользователях получена
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    properties:
+                      id:
+                        type: integer
+                      login:
+                        type: string
+                      name:
+                        type: string
+                      surname:
+                        type: string
+                      role:
+                        type: string
+                        enum: ['user', 'controller', 'admin']
+                      group:
+                        type: string
+          '401':
+            description: Пользователь не авторизован
+          '500':
+            description: Ошибка при обработке сервером
+          '403':
+            description: У пользователя недостаточно прав
+          
+  /annotations:
+    post:
+      tags:
+        - Annotations
+      summary: Создать новую разметку
+      security:
+      - Bearer: []
+      operationId: createAnnotation
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                bbs:
+                  type: string
+                  description: Bounding box errors (JSON array as a string).
+                  example: "[1.2, 3.4, 5.6, 7.8]"
+                class_id:
+                  type: integer
+                  format: uint64
+                  description: Class label for the annotation.
+                annotFile:
+                  type: string
+                  format: binary
+                  description: The file associated with the annotation.
+      responses:
+        '200':
+          description: Тип разметки успешно создан
+        '401':
+          description: Пользователь не авториизован
+        '500':
+          description: Ошибка при обработке сервером
+        '403':
+          description: У пользователя недостаточно прав
+        '400':
+          description: Ошибка в запросе
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  
+    get:
+      tags:
+        - Annotations
+      summary: Получить список информации разметок
+      security:
+      - Bearer: []
+      operationId: getAnnotations
+      responses:
+        '200':
+          description: Результаты запроса
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    error_bb:
+                      type: array
+                      items:
+                        type: number
+                    class_label:
+                      type: integer
+        '401':
+          description: Пользователь не авторизован
+        '500':
+          description: Ошибка при обработке сервером
+        '403':
+          description: У пользователя недостаточно прав
+        '400':
+          description: Ошибка в запросе
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        
+  
+  /annotations/{id}:
+    delete:
+      tags:
+        - Annotations
+      summary: Удалить разметку
+      security:
+      - Bearer: []
+      operationId: deleteAnnotations
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор разметки для удаления
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Разметка  успешно удалена
+        '401':
+          description: Пользователь не авторизован
+        '500':
+          description: Ошибка при обработке сервером
+        '403':
+          description: У пользователя недостаточно прав
+        '400':
+          description: Ошибка в запросе
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+    get:
+      tags:
+        - Annotations
+      summary: Получить изображение разметки 
+      security:
+      - Bearer: []
+      operationId: getAnotation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор разметки для получения
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Разметка  успешно получена
+          content:
+              multipart/form-data:
+                schema:
+                  type: object
+                  properties:
+                    bbs:
+                      type: array
+                      items:
+                        type: number
+                        format: float
+                      description: Bounding box errors.
+                    class_id:
+                      type: integer
+                      format: uint64
+                      description: Class label for the annotation.
+                    annotFile:
+                      type: string
+                      format: binary
+                      description: The file associated with the annotation.
+        '401':
+          description: Пользователь не авторизован
+        '500':
+          description: Ошибка при обработке сервером
+        '403':
+          description: У пользователя недостаточно прав
+        '400':
+          description: Ошибка в запросе
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+components:
+  schemas:
+    Document:
+      type: object
+      properties:
+        page_count:
+          type: integer
+        document_name:
+          type: string
+        checks_count:
+          type: integer
+        creator_id:
+          type: integer
+        creation_time:
+          type: string
+          format: date-time
+
+    MarkupType:
+      type: object
+      properties:
+        description:
+          type: string
+        class_name:
+          type: string
+
+    Markup:
+      type: object
+      properties:
+        img_bytes:
+          type: string
+        error_bb:
+          type: array
+          items:
+            type: number
+        class_label:
+          type: integer
+
+    User:
+      type: object
+      properties:
+        login:
+          type: string
+        password:
+          type: string
+        name:
+          type: string
+        surname:
+          type: string
+        role:
+          type: string
+          enum: ['guest', 'user', 'controller', 'admin']
+        group:
+          type: string
+  securitySchemes:
+    Bearer:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: 'JWT Authorization header using the Bearer scheme. Example: "Authorization: Bearer {token}"'
+security:
+  - Bearer: []

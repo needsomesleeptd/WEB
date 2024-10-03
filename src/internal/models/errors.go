@@ -24,7 +24,7 @@ func (e *UserError) Unwrap() error {
 var (
 	ErrNotFound            = NewUserErr("item not found\n")
 	ErrInternalServ        = NewUserErr("internal server error\n")
-	ErrDecodingRequest     = NewUserErr("broken request\n")
+	ErrDecodingRequest     = NewUserErr("failed to parse json\n")
 	ErrDuplicateuserData   = NewUserErr("user with this login already exists\n")
 	ErrDuplicateMarkupType = NewUserErr("ID of this markup already exists\n")
 	ErrViolatingKeyAnnot   = NewUserErr("there is no annot type for this anotattion\n")

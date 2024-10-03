@@ -33,8 +33,12 @@ import (
 	"os/signal"
 	"syscall"
 
+	_ "annotater/internal/cmd/docs"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -140,6 +144,15 @@ func main() {
 	accesMiddleware := access_middleware.NewAccessMiddleware(log, userService)
 
 	router.Use(middleware.Logger)
+	cors := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "PATCH"},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	})
+
+	router.Use(cors.Handler)
 
 	router.Route("/api", func(r chi.Router) {
 		r.Route("/v1", func(r chi.Router) {
@@ -195,8 +208,8 @@ func main() {
 			})
 
 			//auth, no middleware is required
-			router.Post("/user/SignUp", authHandlerV1.SignUp())
-			router.Post("/user/SignIn", authHandlerV1.SignIn())
+			r.Post("/user/SignUp", authHandlerV1.SignUp())
+			r.Post("/user/SignIn", authHandlerV1.SignIn())
 		})
 
 		r.Route("/v2", func(r chi.Router) {
@@ -212,16 +225,16 @@ func main() {
 				r.Get("/documents/{id}/reports", documentHandlerV2.GetReportByID())
 
 				// AnnotTypes
-				r.With(accesMiddleware.ControllersAndHigherMiddleware).Post("/anottationTypes", annotTypeHandlerV2.AddAnnotType())
-				r.With(accesMiddleware.ControllersAndHigherMiddleware).Get("/anotattionTypes", annotTypeHandlerV2.GetAllAnnotTypes())
-				r.With(accesMiddleware.AdminOnlyMiddleware).Delete("/anotattionTypes/{id}", annotTypeHandlerV2.DeleteAnnotType())
+				r.With(accesMiddleware.ControllersAndHigherMiddleware).Post("/annotationTypes", annotTypeHandlerV2.AddAnnotType())
+				r.With(accesMiddleware.ControllersAndHigherMiddleware).Get("/annotationTypes", annotTypeHandlerV2.GetAllAnnotTypes())
+				r.With(accesMiddleware.AdminOnlyMiddleware).Delete("/annotationTypes/{id}", annotTypeHandlerV2.DeleteAnnotType())
 				//in prev row doesn't throw not found error on deleting nothing
 
 				// Annots
-				r.With(accesMiddleware.ControllersAndHigherMiddleware).Post("/anottations", annotHandlerV2.AddAnnot()) //smth
-				r.With(accesMiddleware.ControllersAndHigherMiddleware).Get("/anottations", annotHandlerV2.GetAllAnnots())
-				r.With(accesMiddleware.ControllersAndHigherMiddleware).Get("/anottations/{id}", annotHandlerV2.GetAnnot())
-				r.With(accesMiddleware.ControllersAndHigherMiddleware).Delete("/anottations/{id}", annotHandlerV2.DeleteAnnot())
+				r.With(accesMiddleware.ControllersAndHigherMiddleware).Post("/annotations", annotHandlerV2.AddAnnot()) //smth
+				r.With(accesMiddleware.ControllersAndHigherMiddleware).Get("/annotations", annotHandlerV2.GetAllAnnots())
+				r.With(accesMiddleware.ControllersAndHigherMiddleware).Get("/annotations/{id}", annotHandlerV2.GetAnnot())
+				r.With(accesMiddleware.ControllersAndHigherMiddleware).Delete("/annotations/{id}", annotHandlerV2.DeleteAnnot())
 
 				// Users
 				r.With(accesMiddleware.AdminOnlyMiddleware).Patch("/users/{login}", userHandlerV2.ChangeUserPerms())
@@ -233,7 +246,9 @@ func main() {
 			r.Post("/register", authHandlerV2.Register())
 		})
 	})
-
+	router.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8080/swagger/swagger.json"), //The url pointing to API definition
+	))
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 

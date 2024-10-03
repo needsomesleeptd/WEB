@@ -1,7 +1,7 @@
 package response
 
 type Response struct {
-	Status string `json:"status"`
+	Status string `json:"status,omitempty"`
 	Error  string `json:"error,omitempty"`
 }
 
@@ -23,4 +23,8 @@ func Error(msg string) Response {
 	}
 }
 
-
+func ErrorV2(msg string) Response {
+	return Response{
+		Error: msg,
+	}
+}

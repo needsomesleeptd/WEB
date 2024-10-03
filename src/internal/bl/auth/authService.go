@@ -109,7 +109,7 @@ func (serv *AuthService) SignIn(candidate *models.User) (string, error) {
 	}
 	err = serv.passwordHasher.ComparePasswordhash(candidate.Password, user.Password)
 	if err != nil {
-		err = err_wr.Wrapf(err, ERR_LOGIN_STRF+":%v", candidate.Login, ErrWrongPassword)
+		err = err_wr.Wrapf(ErrWrongPassword, ERR_LOGIN_STRF+":%v", candidate.Login, err)
 		serv.logger.Warn(err)
 		return "", err
 	}

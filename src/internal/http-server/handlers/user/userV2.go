@@ -5,6 +5,7 @@ import (
 	response "annotater/internal/lib/api"
 	"annotater/internal/models"
 	models_dto "annotater/internal/models/dto"
+	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -26,18 +27,19 @@ func NewUserHandlerV2(logSrc *logrus.Logger, serv service.IUserService) UserHand
 }
 
 type RequestChangeRoleV2 struct {
-	ReqRole models.Role `json:"req_role"`
+	ReqRole models.Role `json:"req_role,omitempty"`
 }
 
 func (h *UserHandlerV2) ChangeUserPerms() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userLoginStr := chi.URLParam(r, "login")
-
 		var req RequestChangeRoleV2
-		err := render.DecodeJSON(r.Body, &req)
+		d := json.NewDecoder(r.Body)
+		d.DisallowUnknownFields()
+		err := d.Decode(&req)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			render.JSON(w, r, response.Error(ErrDecodingJson.Error()))
+			render.JSON(w, r, response.ErrorV2(ErrDecodingJson.Error()))
 			h.logger.Warn(err.Error())
 			return
 		}
@@ -46,7 +48,7 @@ func (h *UserHandlerV2) ChangeUserPerms() http.HandlerFunc {
 		if err != nil {
 			if errors.Is(err, models.ErrNotFound) || errors.Is(err, models.ErrInvalidRole) {
 				w.WriteHeader(http.StatusBadRequest)
-				render.JSON(w, r, response.Error(models.GetUserError(err).Error()))
+				render.JSON(w, r, response.ErrorV2(models.GetUserError(err).Error()))
 			} else {
 				w.WriteHeader(http.StatusInternalServerError)
 			}

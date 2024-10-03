@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	ErrDecodingJson = errors.New("broken request")
+	ErrDecodingJson = errors.New("invalid json")
 	ErrInternalServ = errors.New("internal server error")
 )
 
