@@ -69,6 +69,16 @@ services:
     networks:
       - postgres
 
+  swagger:  # New Swagger UI service
+    image: swaggerapi/swagger-ui
+    ports:
+      - "3000:8080"  # Maps port 3000 on the host to 8080 in the container
+    volumes:
+      - ./docs/openapi.yaml:/mnt/openapi.yaml  # Adjust the path to your OpenAPI file
+    environment:
+      SWAGGER_JSON: /mnt/openapi.yaml  # Points to the OpenAPI YAML file
+
+
 volumes:
   habrdb-data:
   pgadmin-data:
