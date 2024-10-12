@@ -23,7 +23,7 @@ const (
 )
 
 type RequestSignUp struct {
-	User models_dto.User `json:"user"`
+	User models_dto.UserWithPasswd `json:"user"`
 }
 
 type RequestSignIn struct {
@@ -58,7 +58,9 @@ func (h *AuthHandlerV1) SignUp() http.HandlerFunc {
 			return
 		}
 		req.User.Role = models.Sender
-		candidate := models_dto.FromDtoUser(&req.User)
+		userDto := models_dto.FromDtoUserWithPasswd(&req.User)
+		candidate := models_dto.FromDtoUser(&userDto)
+		h.log.Infof("candidate : %v, req: %v", candidate, req)
 		err = h.authService.SignUp(&candidate)
 		if err != nil {
 			h.log.Warnf("unable to signUp with user login %v:%v\n", req.User.Login, err)

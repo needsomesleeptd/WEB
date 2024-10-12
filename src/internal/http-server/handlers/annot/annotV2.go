@@ -110,7 +110,12 @@ func (h *AnnotHandlerV2) AddAnnot() http.HandlerFunc {
 		}
 		err = h.annotService.AddAnottation(&annot)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			if errors.Is(err, service.ErrBoundingBoxes) || errors.Is(err, service.ErrInvalidFileType) {
+				w.WriteHeader(http.StatusBadRequest)
+				render.JSON(w, r, response.ErrorV2(models.GetUserError(err).Error())) //TODO:: add
+			} else {
+				w.WriteHeader(http.StatusInternalServerError)
+			}
 			//render.JSON(w, r, response.ErrorV2(models.GetUserError(err).Error()))
 			h.log.Error(err)
 			return

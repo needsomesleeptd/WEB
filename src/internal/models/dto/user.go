@@ -15,6 +15,16 @@ type User struct {
 	Group    string      `json:"group"` // in case it is a controller it will have work group, in case of user, his group
 }
 
+type UserWithPasswd struct {
+	ID       uint64      `json:"id"`
+	Login    string      `json:"login"`
+	Password string      `json:"password"`
+	Name     string      `json:"name"`
+	Surname  string      `json:"surname"`
+	Role     models.Role `json:"role"`
+	Group    string      `json:"group"` // in case it is a controller it will have work group, in case of user, his group
+}
+
 func (u *User) ToJSON() (string, error) {
 	jsonBytes, err := json.Marshal(u)
 	if err != nil {
@@ -25,6 +35,18 @@ func (u *User) ToJSON() (string, error) {
 
 func FromDtoUser(userDa *User) models.User {
 	return models.User{
+		ID:       userDa.ID,
+		Name:     userDa.Name,
+		Login:    userDa.Login,
+		Password: userDa.Password,
+		Surname:  userDa.Surname,
+		Role:     userDa.Role,
+		Group:    userDa.Group,
+	}
+}
+
+func FromDtoUserWithPasswd(userDa *UserWithPasswd) User {
+	return User{
 		ID:       userDa.ID,
 		Name:     userDa.Name,
 		Login:    userDa.Login,

@@ -14,6 +14,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type ResponseSignInV2 struct {
+	Jwt string `json:"jwt,omitempty"`
+}
+
 type RequestSignUpV2 struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`
@@ -106,7 +110,7 @@ func (h *AuthHandlerV2) Auth() http.HandlerFunc {
 			return
 		}
 
-		resp := ResponseSignIn{Response: response.OK(), Jwt: tokenStr}
+		resp := ResponseSignInV2{Jwt: tokenStr}
 		h.log.Infof("user with login %v sucessfully signed in\n", req.Login)
 		render.JSON(w, r, resp)
 		w.WriteHeader(http.StatusOK)

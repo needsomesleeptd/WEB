@@ -32,8 +32,8 @@ func (repo *AnotattionTypeRepositoryAdapter) AddAnottationType(markUp *models.Ma
 
 func (repo *AnotattionTypeRepositoryAdapter) DeleteAnotattionType(id uint64) error { //note that it is cascade deletion, gorm doesn't support cascade deletion((
 
-	var markup models_da.Markup
-	err := repo.db.Where("class_label = ?", id).First(&markup).Error // don't know wether we neeed that
+	var markupType models_da.MarkupType
+	err := repo.db.Where("id = ?", id).First(&markupType).Error // don't know wether we neeed that
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return models.ErrNotFound
 	}

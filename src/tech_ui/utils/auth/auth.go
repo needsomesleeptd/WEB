@@ -47,9 +47,12 @@ func SignUp(client *http.Client, login string, password string) (string, error) 
 
 	url := authPath + "SignUp"
 
-	user := models_dto.User{Login: login, Password: password}
-	reqBody := auth_handler.RequestSignUp{User: user}
-	reqBodyJson, _ := json.Marshal(reqBody)
+	userWithPasswd := models_dto.UserWithPasswd{Login: login, Password: password}
+	reqBody := auth_handler.RequestSignUp{User: userWithPasswd}
+	reqBodyJson, err := json.Marshal(reqBody)
+	if err != nil {
+		return "", err
+	}
 	respGot, err := http.Post(url, "application/json", bytes.NewBuffer(reqBodyJson))
 	if err != nil {
 		return "", err

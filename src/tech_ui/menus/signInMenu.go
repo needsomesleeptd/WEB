@@ -57,9 +57,11 @@ func (m *Menu) SignUpMenu(opt wmenu.Opt) error {
 	fmt.Scan(&login)
 	fmt.Println("Enter password:")
 	fmt.Scan(&passwd)
+	//fmt.Printf("login : %v, passwd : %v", login, passwd)
 	_, err := auth_ui.SignUp(client.Client, login, passwd)
 
 	if err != nil {
+		//fmt.Print(err)
 		return err
 	}
 	fmt.Println(response.StatusOK)

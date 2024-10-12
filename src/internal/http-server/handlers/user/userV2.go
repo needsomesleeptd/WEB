@@ -14,6 +14,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type ResponseGetAllUsersV2 struct {
+	Users []models_dto.User
+}
 type UserHandlerV2 struct {
 	logger      *logrus.Logger
 	userService service.IUserService
@@ -71,8 +74,8 @@ func (h *UserHandlerV2) GetAllUsers() http.HandlerFunc {
 			return
 		}
 		usersDTO := models_dto.ToDtoUserSlice(users)
-		resp := ResponseGetAllUsers{response.OK(), usersDTO}
+		//resp := ResponseGetAllUsersV2{usersDTO}
 		h.logger.Infof("succesfully got all users\n")
-		render.JSON(w, r, resp)
+		render.JSON(w, r, usersDTO)
 	}
 }

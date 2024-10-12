@@ -335,7 +335,7 @@ paths:
         '500':
           description: Ошибка при обработке сервером
 
-  /users/{id}:
+  /users/{login}:
     patch:
       tags:
         - Users
@@ -344,12 +344,12 @@ paths:
       - Bearer: []
       operationId: changeUserRole
       parameters:
-        - name: id
+        - name: login
           in: path
           required: true
-          description: Идентификатор пользователя
+          description: логин   пользователя
           schema:
-            type: integer
+            type: string
       requestBody:
         required: true
         content:
