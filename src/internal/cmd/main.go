@@ -82,11 +82,11 @@ func main() {
 		log.Fatal(err)
 		os.Exit(1)
 	}
-	err = migrate(db)
+	/*err = migrate(db)
 	if err != nil {
 		log.Fatal(err)
 		os.Exit(1)
-	}
+	}*/
 
 	//auth service
 	userRepo := user_repo_adapter.NewUserRepositoryAdapter(db)
