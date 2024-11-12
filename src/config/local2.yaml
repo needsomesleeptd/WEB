@@ -2,12 +2,12 @@ model:
   route: "http://0.0.0.0:5000/pred"
 
 report_storage:
-  report_creator_path: ../../../reportsCreator
-  report_storage: ../../../reports
+  report_creator_path: ../reportsCreator
+  report_storage: ../reports
   report_ext: .pdf
 
 document_storage:
-  document_path: ../../../documents
+  document_path: ../documents
   document_ext: .pdf
 
 database:

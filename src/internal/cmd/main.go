@@ -262,7 +262,7 @@ func main() {
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
-			fmt.Println("error with server")
+			fmt.Println("error with server", err)
 		}
 	}()
 
